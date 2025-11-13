@@ -56,12 +56,21 @@ jobs:
         run: pipenv install selenium
       - name: Update
         run: pipenv run dev
-      - name: Commit and push if changed
-        run: |
-          git config --local user.email "github-actions[bot]@users.noreply.github.com"
-          git config --local user.name "github-actions[bot]"
-          git add .
-          if ! git diff --staged --quiet; then
-            git commit -m "Github Action Auto Updated"
-            git push --force
-          fi
+      - name: Commit and push if changed (exclude workflows)
+  shell: bash
+  run: |
+    set -e
+    git config --local user.email "github-actions[bot]@users.noreply.github.com"
+    git config --local user.name  "github-actions[bot]"
+
+    # 1) 暂存所有变更
+    git add -A
+    # 2) 把工作流目录的变更从暂存区移除（不提交）
+    git reset .github/workflows/ || true
+
+    if ! git diff --staged --quiet; then
+      git commit -m "Github Action Auto Updated"
+      git push
+    else
+      echo "No non-workflow changes to commit."
+    fi
